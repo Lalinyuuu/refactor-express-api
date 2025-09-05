@@ -1,18 +1,25 @@
-// Set up db connection here
-// Named Import ตัว MongoClient มาจาก "mongodb"
-import { MongoClient } from "mongodb";
+import { MongoClient } from 'mongodb';
+import 'dotenv/config';
 
-// MongoDB จะมี Url ให้เราทำการเชื่อมต่อ
-// โดยปกติแล้ว Url จะอยู๋ในรูปแบบ `mongodb://url:port`
-const connectionString = "mongodb://127.0.0.1:27017";
+const uri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017';
+const dbName = process.env.DB_NAME || 'practice-mongo';
 
-// Initlize ตัว `MongoClient` ซึ่งรับ Input 2 ตัว
-// 1) Mongo Url ซึ่งเราจะใช้ `mongodb://127.0.0.1:27017`
-// 2) Options ซึ่งเราจะใส่ `{ useUnifiedTopology: true }`
-
-export const client = new MongoClient(connectionString, {
-  useUnifiedTopology: true, // เป็นการใช้ Connection management engine ตัวใหม่
+export const client = new MongoClient(uri, {
+  ignoreUndefined: true,
+  useUnifiedTopology: true,
 });
 
-// กำหนดให้ DB ที่จะใช้งานคือ "practice-mongo"
-export const db = client.db("practice-mongo");
+let _db = null;
+
+export async function connectToDatabase() {
+  if (_db) return _db;
+  await client.connect();
+  _db = client.db(dbName);
+  console.log(`[db] Connected to MongoDB: ${dbName}`);
+  return _db;
+}
+
+export function getDB() {
+  if (!_db) throw new Error('Database not initialized. Call connectToDatabase() first.');
+  return _db;
+}
